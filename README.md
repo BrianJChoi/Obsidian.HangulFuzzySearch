@@ -19,11 +19,22 @@ Obsidian에서 한글 파일명을 **초성**, **중성**, **종성** 단위로 
 
 ## 📦 설치 방법
 
-### 방법 1: 수동 설치 (개발 버전)
+### 방법 1: BRAT 설치 (추천)
+
+1. [BRAT 플러그인](https://github.com/TfTHacker/obsidian42-brat) 설치 및 활성화
+2. BRAT 설정에서 **"Add Beta plugin"** 클릭
+3. 다음 GitHub URL 입력:
+   ```
+   https://github.com/BrianJChoi/obsidian-hangul-search
+   ```
+4. **"Add Plugin"** 클릭하여 설치
+5. 설정 → 커뮤니티 플러그인에서 "Hangul Fuzzy Search" 활성화
+
+### 방법 2: 수동 설치 (개발 버전)
 
 1. 이 저장소를 클론하거나 다운로드
 ```bash
-git clone https://github.com/yourname/obsidian-hangul-search.git
+git clone https://github.com/BrianJChoi/obsidian-hangul-search.git
 ```
 
 2. 플러그인 빌드
@@ -43,12 +54,6 @@ npm run build
 
 4. Obsidian에서 플러그인 활성화
    - 설정 → 커뮤니티 플러그인 → "Hangul Fuzzy Search" 활성화
-
-### 방법 2: BRAT 설치 (추천)
-
-1. [BRAT 플러그인](https://github.com/TfTHacker/obsidian42-brat) 설치
-2. BRAT 설정에서 이 저장소 URL 추가
-3. 자동 업데이트 지원
 
 ## 🎯 사용법
 
@@ -80,7 +85,7 @@ npm run build
 
 1. 저장소 클론
 ```bash
-git clone https://github.com/yourname/obsidian-hangul-search.git
+git clone https://github.com/BrianJChoi/obsidian-hangul-search.git
 cd obsidian-hangul-search
 ```
 
@@ -131,7 +136,7 @@ MIT License - 자유롭게 사용, 수정, 배포 가능합니다.
 
 ## 🐛 버그 신고 & 기능 요청
 
-[Issues](https://github.com/yourname/obsidian-hangul-search/issues) 페이지에서 버그 신고나 기능 요청을 해주세요.
+[Issues](https://github.com/BrianJChoi/obsidian-hangul-search/issues) 페이지에서 버그 신고나 기능 요청을 해주세요.
 
 ## 📊 버전 히스토리
 
@@ -142,5 +147,5 @@ MIT License - 자유롭게 사용, 수정, 배포 가능합니다.
 
 ---
 
-**만든 이**: [Your Name](https://github.com/yourname)  
-**문의**: [이메일 주소]
+**만든 이**: [Brian Choi](https://github.com/BrianJChoi)  
+**문의**: [GitHub Issues](https://github.com/BrianJChoi/obsidian-hangul-search/issues)

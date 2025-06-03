@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "minAppVersion": "1.1.0",
   "description": "Adds Hangul fuzzy search (초성·중성·부분 음절) to Quick Switcher and link suggestions.",
-  "author": "YourName",
-  "authorUrl": "https://github.com/yourname",
+  "author": "brianchoi",
+  "authorUrl": "https://github.com/BrianJChoi",
   "main": "main.js"
 }
