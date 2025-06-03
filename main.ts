@@ -24,24 +24,24 @@ export default class HangulSearchPlugin extends Plugin {
             this.addCoreCommands();
             console.log('✅ Commands registered');
 
-            // 4) Build index in background
-            this.buildIndexAsync();
-
-            // 5) Register vault events for real-time updates
+            // 4) Register vault events for real-time updates
             this.registerVaultEvents();
             console.log('✅ Vault events registered');
 
-            // 6) Register link autocompletion
+            // 5) Register link autocompletion
             this.registerEditorSuggest(new HangulLinkSuggest(this.app, this.index));
             console.log('✅ Korean link suggestions enabled');
 
-            // 7) Add settings tab
+            // 6) Add settings tab
             this.addSettingTab(new HangulSearchSettingTab(this.app, this));
             console.log('✅ Settings tab added');
 
-            // 8) Show success message
-            new Notice('🎉 Korean Search Plugin activated! Use Cmd/Ctrl+Shift+O to search', 4000);
-            console.log('🎉 Korean Search Plugin ready!');
+            // 7) Show immediate availability message
+            new Notice('✅ Korean Search Plugin ready! Building index in background...', 3000);
+            console.log('🎉 Korean Search Plugin ready! Starting background indexing...');
+
+            // 8) Build index progressively in background (non-blocking)
+            this.buildIndexProgressively();
 
         } catch (error) {
             console.error('❌ Korean Search Plugin failed to load:', error);
@@ -120,12 +120,54 @@ export default class HangulSearchPlugin extends Plugin {
         });
     }
 
-    private async buildIndexAsync() {
+    private async buildIndexProgressively() {
         try {
-            console.log('🔍 Building Korean search index...');
-            await this.index.build();
-            console.log(`✅ Korean search index completed: ${this.index.getIndexedCount()} files`);
-            new Notice(`✅ Korean search is ready! ${this.index.getIndexedCount()} files indexed`, 3000);
+            console.log('🔍 Building Korean search index progressively...');
+            
+            const files = this.app.vault.getMarkdownFiles();
+            const totalFiles = files.length;
+            console.log(`📊 Found ${totalFiles} files to index`);
+            
+            // For very large vaults, show a progress notice
+            let progressNotice: Notice | null = null;
+            if (totalFiles > 1000) {
+                progressNotice = new Notice(`🔄 Indexing ${totalFiles} files for Korean search...`, 0);
+            }
+            
+            // Clear existing index
+            this.index.clear();
+            
+            // Process files in batches to avoid blocking UI
+            const batchSize = 100; // Increased batch size for better performance
+            let totalIndexed = 0;
+            
+            for (let i = 0; i < files.length; i += batchSize) {
+                const batch = files.slice(i, i + batchSize);
+                
+                // Process entire batch at once
+                const batchIndexed = await this.index.batchAddFiles(batch);
+                totalIndexed += batchIndexed;
+                
+                // Update progress for large vaults
+                if (progressNotice && totalFiles > 1000) {
+                    const progress = Math.round((totalIndexed / totalFiles) * 100);
+                    progressNotice.setMessage(`🔄 Korean search indexing: ${progress}% (${totalIndexed}/${totalFiles})`);
+                }
+                
+                // Small delay to prevent UI blocking, but only if more batches remain
+                if (i + batchSize < files.length) {
+                    await new Promise(resolve => setTimeout(resolve, 5)); // Reduced delay
+                }
+            }
+            
+            // Hide progress notice and show completion
+            if (progressNotice) {
+                progressNotice.hide();
+            }
+            
+            console.log(`✅ Korean search index completed: ${totalIndexed} files`);
+            new Notice(`🎉 Korean search fully indexed! ${totalIndexed} files ready to search`, 4000);
+            
         } catch (error) {
             console.error('❌ Failed to build search index:', error);
             new Notice('❌ Failed to build search index - check console for details', 5000);

@@ -24,7 +24,7 @@ export class HangulIndex {
 
     /** Build initial index from all vault files */
     async build() {
-        console.log('🔍 Building Korean search index...');
+        console.log('🔍 Building Korean search index (legacy method)...');
         const files = this.plugin.app.vault.getMarkdownFiles();
         
         this.entries = [];
@@ -33,19 +33,20 @@ export class HangulIndex {
         let indexed = 0;
         for (const file of files) {
             try {
-                await this.addFile(file);
+                await this.addFile(file, true); // Skip individual rebuilds
                 indexed++;
             } catch (error) {
                 console.warn(`Failed to index ${file.path}:`, error);
             }
         }
         
+        // Rebuild Fuse once at the end
         this.rebuildFuse();
         console.log(`✅ Korean search index completed: ${indexed} files`);
     }
 
     /** Add a single file to the index */
-    async addFile(file: TFile): Promise<void> {
+    async addFile(file: TFile, skipFuseRebuild: boolean = false): Promise<void> {
         if (!file || file.extension !== 'md') return;
         
         try {
@@ -54,12 +55,16 @@ export class HangulIndex {
             
             // Remove existing entry if it exists
             if (this.indexMap.has(file.path)) {
-                this.removeFile(file);
+                this.removeFile(file, true); // Skip rebuild during removal too
             }
             
             this.entries.push(entry);
             this.indexMap.set(file.path, entry);
-            this.rebuildFuse();
+            
+            // Only rebuild Fuse if not in batch mode
+            if (!skipFuseRebuild) {
+                this.rebuildFuse();
+            }
             
         } catch (error) {
             console.warn(`Failed to add file ${file.path}:`, error);
@@ -67,7 +72,7 @@ export class HangulIndex {
     }
 
     /** Remove a file from the index */
-    removeFile(file: TFile): void {
+    removeFile(file: TFile, skipFuseRebuild: boolean = false): void {
         const existingEntry = this.indexMap.get(file.path);
         if (!existingEntry) return;
         
@@ -75,7 +80,11 @@ export class HangulIndex {
         if (index > -1) {
             this.entries.splice(index, 1);
             this.indexMap.delete(file.path);
-            this.rebuildFuse();
+            
+            // Only rebuild Fuse if not in batch mode
+            if (!skipFuseRebuild) {
+                this.rebuildFuse();
+            }
         }
     }
 
@@ -348,5 +357,23 @@ export class HangulIndex {
         } catch (error) {
             console.error('❌ Failed to rebuild search index:', error);
         }
+    }
+
+    /** Batch add files with single Fuse rebuild at the end */
+    async batchAddFiles(files: TFile[]): Promise<number> {
+        let indexed = 0;
+        
+        for (const file of files) {
+            try {
+                await this.addFile(file, true); // Skip individual rebuilds
+                indexed++;
+            } catch (error) {
+                console.warn(`Failed to index ${file.path}:`, error);
+            }
+        }
+        
+        // Rebuild Fuse once at the end of batch
+        this.rebuildFuse();
+        return indexed;
     }
 } 
