@@ -75,6 +75,11 @@ export class HangulIndex {
         // Decompose Korean text for filename only
         const jamo = this.decomposeKoreanText(display);
         
+        // Debug logging to see what's being indexed
+        if (display.includes('한') || display.includes('ㅎ')) {
+            console.log(`📝 Indexing Korean file: "${display}" → jamo: "${jamo}"`);
+        }
+        
         return {
             display,
             jamo,
@@ -175,6 +180,13 @@ export class HangulIndex {
         if (!query.trim()) return [];
         
         console.log(`🔍 Searching: "${query}"`);
+        console.log(`📊 Index has ${this.entries.length} entries`);
+        
+        // Debug: show some sample entries
+        if (this.entries.length > 0) {
+            const sampleEntry = this.entries[0];
+            console.log(`📝 Sample entry: "${sampleEntry.display}" → jamo: "${sampleEntry.jamo}"`);
+        }
         
         // Handle different types of Korean search patterns
         const searchResults = this.performKoreanSearch(query);
@@ -241,7 +253,13 @@ export class HangulIndex {
             this.rebuildFuse();
         }
         
+        console.log(`🔍 Fuse search for "${searchTerm}" (strategy: ${strategy})`);
         const fuseResults = this.fuse.search(searchTerm, { limit: 50 });
+        console.log(`📊 Fuse returned ${fuseResults.length} results for "${searchTerm}"`);
+        
+        if (fuseResults.length > 0) {
+            console.log(`📝 First result: "${fuseResults[0].item.display}" (score: ${fuseResults[0].score})`);
+        }
         
         fuseResults.forEach(result => {
             const item = result.item;
@@ -401,14 +419,23 @@ export class HangulIndex {
         try {
             const threshold = this.plugin.settings?.fuzzyThreshold || this.defaultThreshold;
             
+            console.log(`🔧 Rebuilding Fuse index with ${this.entries.length} entries`);
+            
+            // Show sample entries for debugging
+            if (this.entries.length > 0) {
+                const koreanEntries = this.entries.filter(e => e.display.match(/[가-힣]/));
+                console.log(`📊 Korean files found: ${koreanEntries.length}`);
+                if (koreanEntries.length > 0) {
+                    console.log(`📝 Sample Korean entry: "${koreanEntries[0].display}" → jamo: "${koreanEntries[0].jamo}"`);
+                }
+            }
+            
             this.fuse = new Fuse(this.entries, {
                 threshold: threshold,
                 keys: [
-                    { name: 'jamo', weight: 0.6 },        // Korean decomposed filename - highest weight
-                    { name: 'display', weight: 0.4 },     // Original filename - high weight
-                    // Content weights reduced since it's loaded lazily
-                    { name: 'contentJamo', weight: 0.0 }, // Will be zero initially, updated after loading
-                    { name: 'content', weight: 0.0 }      // Will be zero initially, updated after loading
+                    { name: 'jamo', weight: 0.7 },        // Korean decomposed filename - highest weight
+                    { name: 'display', weight: 0.3 },     // Original filename - moderate weight
+                    // Content weights set to 0 since loaded lazily (will be updated later)
                 ],
                 includeScore: true,
                 minMatchCharLength: 1,
