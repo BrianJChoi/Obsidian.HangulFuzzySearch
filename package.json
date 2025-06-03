@@ -1,28 +1,35 @@
 {
   "name": "obsidian-hangul-search",
-  "version": "0.1.1",
-  "description": "Adds Hangul fuzzy search (초성·중성·부분 음절) to Quick Switcher and link suggestions.",
+  "version": "0.2.0",
+  "description": "Korean Search (Omnisearch Replacement) - Comprehensive search engine with Korean language support",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json"
   },
-  "keywords": ["obsidian", "plugin", "hangul", "korean", "search", "fuzzy"],
-  "author": "brianchoi",
+  "keywords": [
+    "obsidian",
+    "korean",
+    "hangul",
+    "search",
+    "omnisearch",
+    "fuzzy"
+  ],
+  "author": "Brian Choi",
   "license": "MIT",
-  "dependencies": {
-    "fuse.js": "^6.6.2",
-    "hangul-js": "^0.2.6"
-  },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "5.29.0",
     "@typescript-eslint/parser": "5.29.0",
     "builtin-modules": "3.3.0",
     "esbuild": "0.17.3",
     "obsidian": "latest",
     "tslib": "2.4.0",
-    "typescript": "^5.4.0"
+    "typescript": "4.7.4"
+  },
+  "dependencies": {
+    "fuse.js": "^6.6.2",
+    "hangul-js": "^0.2.6"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "obsidian-hangul-search",
   "name": "Korean Search (Omnisearch Replacement)",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "minAppVersion": "1.1.0",
   "description": "Comprehensive search engine with Korean language support. Replaces Omnisearch with 초성/중성/종성 search, content indexing, and advanced fuzzy matching.",
   "author": "Brian Choi",
