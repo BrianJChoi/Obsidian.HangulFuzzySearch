@@ -1,7 +1,7 @@
 import { TFile } from 'obsidian';
 import Fuse from 'fuse.js';
 import Hangul from 'hangul-js';
-import HangulSearchPlugin from '../main';
+import type HangulSearchPlugin from '../main';
 
 export interface IndexEntry {
     display: string;   // 보여줄 이름
@@ -38,6 +38,7 @@ export class HangulIndex {
 
     /** 임계값 업데이트 (설정에서 호출) */
     updateThreshold(threshold: number) {
+        this.plugin.settings.fuzzyThreshold = threshold;
         this.rebuildFuse();
     }
 

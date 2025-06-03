@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import HangulSearchPlugin from '../main';
+import type HangulSearchPlugin from '../main';
 
 export interface HangulSearchSettings {
     fuzzyThreshold: number;       // 0 (엄격) ↔ 1 (느슨)
