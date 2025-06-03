@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+      /* 출력 */
+      "outDir": "dist",
+      "sourceMap": true,
+      "inlineSources": true,
+      "declaration": true,
+      "declarationMap": true,
+  
+      /* 언어·모듈 */
+      "target": "ES2020",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "lib": ["ES2020", "DOM", "WebWorker"],
+  
+      /* 편의 옵션 */
+      "strict": true,
+      "esModuleInterop": true,
+      "isolatedModules": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+  
+      /* 경로 매핑(선택) */
+      "baseUrl": ".",
+      "paths": {
+        "*": ["node_modules/*", "src/types/*"]
+      }
+    },
+    "include": ["src/**/*"]
+  }
