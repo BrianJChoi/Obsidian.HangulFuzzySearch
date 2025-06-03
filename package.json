@@ -1,6 +1,6 @@
 {
   "name": "obsidian-hangul-search",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Adds Hangul fuzzy search (초성·중성·부분 음절) to Quick Switcher and link suggestions.",
   "main": "main.js",
   "scripts": {
