@@ -21,6 +21,12 @@ export class HangulIndex {
     private indexMap: Map<string, IndexEntry> = new Map();
     private defaultThreshold = 0.6; // More lenient for Korean search
     private contentCache: Map<string, {content: string, contentJamo: string}> = new Map();
+    
+    // 🚀 NEW: Pre-computed search indexes for O(1) lookups
+    private initialConsonantIndex: Map<string, IndexEntry[]> = new Map();
+    private jamoIndex: Map<string, IndexEntry[]> = new Map();
+    private ngramIndex: Map<string, IndexEntry[]> = new Map();
+    private decompositionCache: Map<string, string> = new Map();
 
     constructor(private plugin: HangulSearchPlugin) {}
 
@@ -271,22 +277,59 @@ export class HangulIndex {
         });
     }
 
+    /** 🚀 OPTIMIZED: Fast initial consonant search using index */
     private searchByInitialConsonants(query: string, results: Map<string, IndexEntry>): void {
-        // For each entry, check if its initial consonants match the query
-        this.entries.forEach(entry => {
-            const entryInitials = this.extractInitialConsonants(entry.display);
-            if (entryInitials.includes(query)) {
-                const score = this.calculateRelevanceScore(entry, query, 0.3, 'initial-consonant');
-                if (!results.has(entry.path) || results.get(entry.path)!.score < score) {
-                    results.set(entry.path, { ...entry, score });
-                }
+        // O(1) lookup instead of O(n) iteration!
+        const directMatches = this.initialConsonantIndex.get(query) || [];
+        
+        // Also check for subsequence matches (e.g., "ㅎㄱ" in "ㅎㅏㄴㄱㅡㄱ")
+        const subsequenceMatches: IndexEntry[] = [];
+        for (const [pattern, entries] of this.initialConsonantIndex) {
+            if (pattern.includes(query) && pattern !== query) {
+                subsequenceMatches.push(...entries);
+            }
+        }
+        
+        [...directMatches, ...subsequenceMatches].forEach(entry => {
+            const score = this.calculateRelevanceScore(entry, query, 0.3, 'initial-consonant');
+            if (!results.has(entry.path) || results.get(entry.path)!.score < score) {
+                results.set(entry.path, { ...entry, score });
             }
         });
+        
+        console.log(`🔍 Initial consonant search: ${directMatches.length} direct + ${subsequenceMatches.length} subsequence matches`);
     }
 
+    /** 🚀 OPTIMIZED: Fast partial syllable search using n-gram index */
     private searchByPartialSyllables(query: string, results: Map<string, IndexEntry>): void {
-        // For partial syllable search like "한ㄱ"
-        this.entries.forEach(entry => {
+        const matchingEntries = new Set<IndexEntry>();
+        
+        // Decompose query and search n-grams
+        const decomposedQuery = this.decomposeKoreanText(query);
+        
+        // Use n-gram index for fast partial matching
+        for (let i = 0; i < decomposedQuery.length; i++) {
+            const char = decomposedQuery[i];
+            const matches = this.jamoIndex.get(char) || [];
+            matches.forEach(entry => matchingEntries.add(entry));
+            
+            // Check 2-grams and 3-grams
+            if (i < decomposedQuery.length - 1) {
+                const bigram = decomposedQuery.substring(i, i + 2);
+                const bigramMatches = this.ngramIndex.get(bigram) || [];
+                bigramMatches.forEach(entry => matchingEntries.add(entry));
+            }
+            
+            if (i < decomposedQuery.length - 2) {
+                const trigram = decomposedQuery.substring(i, i + 3);
+                const trigramMatches = this.ngramIndex.get(trigram) || [];
+                trigramMatches.forEach(entry => matchingEntries.add(entry));
+            }
+        }
+        
+        // Score the matches
+        matchingEntries.forEach(entry => {
+            // Additional accuracy check for partial syllables
             if (this.matchesPartialSyllable(entry.display, query)) {
                 const score = this.calculateRelevanceScore(entry, query, 0.2, 'partial-syllable');
                 if (!results.has(entry.path) || results.get(entry.path)!.score < score) {
@@ -294,6 +337,8 @@ export class HangulIndex {
                 }
             }
         });
+        
+        console.log(`🔍 Partial syllable search: ${matchingEntries.size} candidates filtered`);
     }
 
     /** Check if query is initial consonants only (like ㅎㄱ) */
@@ -329,12 +374,20 @@ export class HangulIndex {
         return decomposedText.includes(decomposedPattern);
     }
 
-    /** Decompose Korean text for better searching */
+    /** Decompose Korean text for better searching - WITH CACHING */
     private decomposeKoreanText(text: string): string {
+        // Check cache first for massive performance boost
+        if (this.decompositionCache.has(text)) {
+            return this.decompositionCache.get(text)!;
+        }
+        
         try {
-            return Hangul.disassemble(text).join('');
+            const decomposed = Hangul.disassemble(text).join('');
+            this.decompositionCache.set(text, decomposed);
+            return decomposed;
         } catch (error) {
             console.warn('Failed to decompose Korean text:', text, error);
+            this.decompositionCache.set(text, text);
             return text;
         }
     }
@@ -362,6 +415,13 @@ export class HangulIndex {
         this.entries = [];
         this.indexMap.clear();
         this.contentCache.clear();
+        
+        // 🚀 NEW: Clear optimized indexes
+        this.initialConsonantIndex.clear();
+        this.jamoIndex.clear();
+        this.ngramIndex.clear();
+        this.decompositionCache.clear();
+        
         this.rebuildFuse();
     }
 
@@ -447,7 +507,10 @@ export class HangulIndex {
                 useExtendedSearch: false
             });
             
-            console.log(`🔧 Search index updated: ${this.entries.length} entries (fast mode)`);
+            // 🚀 NEW: Build optimized search indexes
+            this.buildSearchIndexes();
+            
+            console.log(`🔧 Search index updated: ${this.entries.length} entries (optimized mode)`);
         } catch (error) {
             console.error('❌ Failed to rebuild search index:', error);
         }
@@ -469,5 +532,57 @@ export class HangulIndex {
         // Rebuild Fuse once at the end of batch
         this.rebuildFuse();
         return indexed;
+    }
+
+    /** 🚀 NEW: Build optimized search indexes */
+    private buildSearchIndexes(): void {
+        console.log('🔧 Building optimized Korean search indexes...');
+        
+        // Clear existing indexes
+        this.initialConsonantIndex.clear();
+        this.jamoIndex.clear();
+        this.ngramIndex.clear();
+        
+        this.entries.forEach(entry => {
+            // Index initial consonants
+            const initials = this.extractInitialConsonants(entry.display);
+            this.addToIndex(this.initialConsonantIndex, initials, entry);
+            
+            // Index decomposed jamo with n-grams for faster partial matching
+            const jamo = entry.jamo;
+            for (let i = 0; i < jamo.length; i++) {
+                // Single character
+                this.addToIndex(this.jamoIndex, jamo[i], entry);
+                
+                // 2-grams and 3-grams for better partial matching
+                if (i < jamo.length - 1) {
+                    this.addToIndex(this.ngramIndex, jamo.substring(i, i + 2), entry);
+                }
+                if (i < jamo.length - 2) {
+                    this.addToIndex(this.ngramIndex, jamo.substring(i, i + 3), entry);
+                }
+            }
+            
+            // Index original display name n-grams too
+            const display = entry.display.toLowerCase();
+            for (let i = 0; i < display.length; i++) {
+                this.addToIndex(this.jamoIndex, display[i], entry);
+                if (i < display.length - 1) {
+                    this.addToIndex(this.ngramIndex, display.substring(i, i + 2), entry);
+                }
+            }
+        });
+        
+        console.log(`✅ Search indexes built: ${this.initialConsonantIndex.size} consonant patterns, ${this.ngramIndex.size} n-grams`);
+    }
+
+    /** Helper to add entry to index map */
+    private addToIndex(index: Map<string, IndexEntry[]>, key: string, entry: IndexEntry): void {
+        if (!key) return;
+        
+        if (!index.has(key)) {
+            index.set(key, []);
+        }
+        index.get(key)!.push(entry);
     }
 } 
