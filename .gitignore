@@ -3,8 +3,6 @@ node_modules/
 npm-debug.log*
 
 # Build artifacts (keep main.js for BRAT)
-dist/
-*.map
 !main.js
 
 # Development files
@@ -12,6 +10,7 @@ src/
 *.d.ts
 !manifest.json
 !versions.json
+!styles.css
 
 # IDE
 .vscode/

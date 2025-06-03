@@ -1,0 +1,48 @@
+/* Hangul Search Plugin Styles */
+
+/* Quick Switcher 스타일 */
+.hangul-switcher-title {
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.hangul-switcher-path {
+    color: var(--text-faint);
+    display: block;
+    margin-top: 2px;
+}
+
+/* Link Suggest 스타일 */
+.hangul-link-title {
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.hangul-link-path {
+    color: var(--text-faint);
+    display: block;
+    margin-top: 2px;
+    font-size: 0.9em;
+}
+
+/* 설정 탭 스타일 */
+.hangul-search-examples {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.hangul-search-examples ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.hangul-search-examples li {
+    margin: 5px 0;
+    color: var(--text-muted);
+}
+
+.hangul-search-examples strong {
+    color: var(--text-accent);
+} 
