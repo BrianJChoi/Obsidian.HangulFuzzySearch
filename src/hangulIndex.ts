@@ -7,11 +7,12 @@ export interface IndexEntry {
     display: string;   // File name for display
     jamo: string;      // Decomposed Korean characters  
     path: string;      // File path
-    content: string;   // File content for searching
-    contentJamo: string; // Decomposed content
+    content?: string;   // File content for searching (loaded on-demand)
+    contentJamo?: string; // Decomposed content (loaded on-demand)
     score: number;     // Search relevance score
     size: number;      // File size
     mtime: number;     // Modified time
+    contentLoaded: boolean; // Track if content is loaded
 }
 
 export class HangulIndex {
@@ -19,55 +20,117 @@ export class HangulIndex {
     private fuse!: Fuse<IndexEntry>;
     private indexMap: Map<string, IndexEntry> = new Map();
     private defaultThreshold = 0.6; // More lenient for Korean search
+    private contentCache: Map<string, {content: string, contentJamo: string}> = new Map();
 
     constructor(private plugin: HangulSearchPlugin) {}
 
-    /** Build initial index from all vault files */
+    /** Fast initial build - only file names and metadata */
     async build() {
-        console.log('🔍 Building Korean search index (legacy method)...');
+        console.log('🔍 Building Korean search index (fast mode)...');
         const files = this.plugin.app.vault.getMarkdownFiles();
         
         this.entries = [];
         this.indexMap.clear();
+        this.contentCache.clear();
         
         let indexed = 0;
         for (const file of files) {
             try {
-                await this.addFile(file, true); // Skip individual rebuilds
+                await this.addFileMetadata(file);
                 indexed++;
             } catch (error) {
-                console.warn(`Failed to index ${file.path}:`, error);
+                console.warn(`Failed to index metadata for ${file.path}:`, error);
             }
         }
         
-        // Rebuild Fuse once at the end
         this.rebuildFuse();
-        console.log(`✅ Korean search index completed: ${indexed} files`);
+        console.log(`✅ Korean search index completed: ${indexed} files (fast mode)`);
     }
 
-    /** Add a single file to the index */
-    async addFile(file: TFile, skipFuseRebuild: boolean = false): Promise<void> {
+    /** Add only file metadata - no content reading */
+    async addFileMetadata(file: TFile): Promise<void> {
         if (!file || file.extension !== 'md') return;
         
         try {
-            const content = await this.plugin.app.vault.cachedRead(file);
-            const entry = await this.createEntry(file, content);
+            const entry = this.createMetadataEntry(file);
             
             // Remove existing entry if it exists
             if (this.indexMap.has(file.path)) {
-                this.removeFile(file, true); // Skip rebuild during removal too
+                this.removeFile(file, true);
             }
             
             this.entries.push(entry);
             this.indexMap.set(file.path, entry);
             
-            // Only rebuild Fuse if not in batch mode
-            if (!skipFuseRebuild) {
-                this.rebuildFuse();
+        } catch (error) {
+            console.warn(`Failed to add metadata for ${file.path}:`, error);
+        }
+    }
+
+    /** Create entry with only metadata - no content reading */
+    private createMetadataEntry(file: TFile): IndexEntry {
+        const display = file.basename;
+        const path = file.path;
+        
+        // Decompose Korean text for filename only
+        const jamo = this.decomposeKoreanText(display);
+        
+        return {
+            display,
+            jamo,
+            path,
+            content: '', // Empty initially
+            contentJamo: '', // Empty initially
+            score: 0,
+            size: file.stat.size,
+            mtime: file.stat.mtime,
+            contentLoaded: false
+        };
+    }
+
+    /** Load content on-demand for better search results */
+    private async loadFileContent(entry: IndexEntry): Promise<void> {
+        if (entry.contentLoaded) return;
+        
+        try {
+            // Check cache first
+            const cached = this.contentCache.get(entry.path);
+            if (cached) {
+                entry.content = cached.content;
+                entry.contentJamo = cached.contentJamo;
+                entry.contentLoaded = true;
+                return;
             }
             
+            // Load content from vault
+            const file = this.plugin.app.vault.getAbstractFileByPath(entry.path);
+            if (file instanceof TFile) {
+                const content = await this.plugin.app.vault.cachedRead(file);
+                // Only take first 500 characters for performance
+                const preview = content.substring(0, 500);
+                const contentJamo = this.decomposeKoreanText(preview);
+                
+                // Cache it
+                this.contentCache.set(entry.path, { content: preview, contentJamo });
+                
+                entry.content = preview;
+                entry.contentJamo = contentJamo;
+                entry.contentLoaded = true;
+            }
         } catch (error) {
-            console.warn(`Failed to add file ${file.path}:`, error);
+            console.warn(`Failed to load content for ${entry.path}:`, error);
+            entry.contentLoaded = true; // Mark as loaded to avoid retry
+        }
+    }
+
+    /** Add a single file to the index */
+    async addFile(file: TFile, skipFuseRebuild: boolean = false): Promise<void> {
+        // Use fast metadata-only approach
+        await this.addFileMetadata(file);
+        
+        // Only rebuild Fuse if not in batch mode
+        if (!skipFuseRebuild) {
+            this.rebuildFuse();
         }
     }
 
@@ -117,9 +180,30 @@ export class HangulIndex {
         const searchResults = this.performKoreanSearch(query);
         console.log(`📊 Found ${searchResults.length} results`);
         
-        return searchResults
+        // For top results, load content if needed for better scoring
+        const topResults = searchResults
             .sort((a, b) => b.score - a.score)
-            .slice(0, limit);
+            .slice(0, Math.min(limit * 2, 100)); // Get more for refinement
+            
+        // Load content for top results asynchronously (don't wait)
+        this.loadContentForTopResults(topResults.slice(0, 20));
+        
+        return topResults.slice(0, limit);
+    }
+
+    /** Load content for top results in background */
+    private async loadContentForTopResults(results: IndexEntry[]): Promise<void> {
+        // Load content in small batches to avoid blocking
+        const batchSize = 5;
+        for (let i = 0; i < results.length; i += batchSize) {
+            const batch = results.slice(i, i + batchSize);
+            await Promise.all(batch.map(entry => this.loadFileContent(entry)));
+            
+            // Small delay between batches
+            if (i + batchSize < results.length) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
+        }
     }
 
     /** Perform Korean-aware search with multiple strategies */
@@ -259,33 +343,11 @@ export class HangulIndex {
     clear(): void {
         this.entries = [];
         this.indexMap.clear();
+        this.contentCache.clear();
         this.rebuildFuse();
     }
 
     /* ---------- Private methods ---------- */
-
-    private async createEntry(file: TFile, content: string): Promise<IndexEntry> {
-        const display = file.basename;
-        const path = file.path;
-        
-        // Extract first few lines for preview
-        const preview = content.split('\n').slice(0, 3).join(' ').substring(0, 200);
-        
-        // Decompose Korean text for better searching
-        const jamo = this.decomposeKoreanText(display);
-        const contentJamo = this.decomposeKoreanText(content);
-        
-        return {
-            display,
-            jamo,
-            path,
-            content: preview,
-            contentJamo,
-            score: 0,
-            size: content.length,
-            mtime: file.stat.mtime
-        };
-    }
 
     private calculateRelevanceScore(entry: IndexEntry, query: string, fuseScore: number, strategy: string): number {
         let score = 1 - fuseScore; // Higher is better
@@ -317,7 +379,7 @@ export class HangulIndex {
         }
         
         // Boost files with query in content
-        if (entry.content.toLowerCase().includes(queryLower)) {
+        if (entry.content?.toLowerCase().includes(queryLower)) {
             score += 2;
         }
         
@@ -342,18 +404,23 @@ export class HangulIndex {
             this.fuse = new Fuse(this.entries, {
                 threshold: threshold,
                 keys: [
-                    { name: 'jamo', weight: 0.4 },
-                    { name: 'display', weight: 0.3 },
-                    { name: 'contentJamo', weight: 0.2 },
-                    { name: 'content', weight: 0.1 }
+                    { name: 'jamo', weight: 0.6 },        // Korean decomposed filename - highest weight
+                    { name: 'display', weight: 0.4 },     // Original filename - high weight
+                    // Content weights reduced since it's loaded lazily
+                    { name: 'contentJamo', weight: 0.0 }, // Will be zero initially, updated after loading
+                    { name: 'content', weight: 0.0 }      // Will be zero initially, updated after loading
                 ],
                 includeScore: true,
                 minMatchCharLength: 1,
                 ignoreLocation: true,
-                includeMatches: false
+                includeMatches: false,
+                // Optimize for speed
+                shouldSort: true,
+                findAllMatches: false,
+                useExtendedSearch: false
             });
             
-            console.log(`🔧 Search index updated: ${this.entries.length} entries`);
+            console.log(`🔧 Search index updated: ${this.entries.length} entries (fast mode)`);
         } catch (error) {
             console.error('❌ Failed to rebuild search index:', error);
         }
@@ -365,10 +432,10 @@ export class HangulIndex {
         
         for (const file of files) {
             try {
-                await this.addFile(file, true); // Skip individual rebuilds
+                await this.addFileMetadata(file);
                 indexed++;
             } catch (error) {
-                console.warn(`Failed to index ${file.path}:`, error);
+                console.warn(`Failed to index metadata for ${file.path}:`, error);
             }
         }
         

@@ -122,41 +122,41 @@ export default class HangulSearchPlugin extends Plugin {
 
     private async buildIndexProgressively() {
         try {
-            console.log('🔍 Building Korean search index progressively...');
+            console.log('🔍 Building Korean search index (ultra-fast mode)...');
             
             const files = this.app.vault.getMarkdownFiles();
             const totalFiles = files.length;
             console.log(`📊 Found ${totalFiles} files to index`);
             
-            // For very large vaults, show a progress notice
-            let progressNotice: Notice | null = null;
-            if (totalFiles > 1000) {
-                progressNotice = new Notice(`🔄 Indexing ${totalFiles} files for Korean search...`, 0);
-            }
-            
             // Clear existing index
             this.index.clear();
             
-            // Process files in batches to avoid blocking UI
-            const batchSize = 100; // Increased batch size for better performance
+            // Use larger batches for even faster processing
+            const batchSize = 500; // Much larger batches for metadata-only processing
             let totalIndexed = 0;
+            
+            // For large vaults, show a simple progress notice
+            let progressNotice: Notice | null = null;
+            if (totalFiles > 2000) {
+                progressNotice = new Notice(`🔄 Fast indexing ${totalFiles} files...`, 0);
+            }
             
             for (let i = 0; i < files.length; i += batchSize) {
                 const batch = files.slice(i, i + batchSize);
                 
-                // Process entire batch at once
+                // Process entire batch at once (metadata only - very fast)
                 const batchIndexed = await this.index.batchAddFiles(batch);
                 totalIndexed += batchIndexed;
                 
-                // Update progress for large vaults
-                if (progressNotice && totalFiles > 1000) {
+                // Update progress less frequently
+                if (progressNotice && totalFiles > 2000 && i % (batchSize * 4) === 0) {
                     const progress = Math.round((totalIndexed / totalFiles) * 100);
-                    progressNotice.setMessage(`🔄 Korean search indexing: ${progress}% (${totalIndexed}/${totalFiles})`);
+                    progressNotice.setMessage(`🔄 Fast indexing: ${progress}%`);
                 }
                 
-                // Small delay to prevent UI blocking, but only if more batches remain
+                // Minimal delay to keep UI responsive
                 if (i + batchSize < files.length) {
-                    await new Promise(resolve => setTimeout(resolve, 5)); // Reduced delay
+                    await new Promise(resolve => setTimeout(resolve, 1)); // Very small delay
                 }
             }
             
@@ -165,8 +165,8 @@ export default class HangulSearchPlugin extends Plugin {
                 progressNotice.hide();
             }
             
-            console.log(`✅ Korean search index completed: ${totalIndexed} files`);
-            new Notice(`🎉 Korean search fully indexed! ${totalIndexed} files ready to search`, 4000);
+            console.log(`✅ Korean search index completed: ${totalIndexed} files (ultra-fast mode)`);
+            new Notice(`🎉 Korean search ready! ${totalIndexed} files indexed instantly`, 3000);
             
         } catch (error) {
             console.error('❌ Failed to build search index:', error);
