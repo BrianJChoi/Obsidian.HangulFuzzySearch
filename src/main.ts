@@ -116,9 +116,22 @@ import {
     renderSuggestion(item: IndexEntry, el: HTMLElement) {
       el.textContent = item.display;
     }
-    selectSuggestion(item: IndexEntry) {
-      if (this.context?.editor) {
-        this.context.editor.replaceRange(item.display + ']]', this.context.start, this.context.end);
+    selectSuggestion(item: IndexEntry, evt: MouseEvent | KeyboardEvent) {
+      const activeLeaf = this.app.workspace.activeLeaf;
+      if (activeLeaf?.view.getViewType() === 'markdown') {
+        const editor = (activeLeaf.view as any).editor;
+        if (editor) {
+          const cursor = editor.getCursor();
+          const lineText = editor.getLine(cursor.line);
+          const beforeCursor = lineText.substring(0, cursor.ch);
+          const linkStart = beforeCursor.lastIndexOf('[[');
+          
+          if (linkStart !== -1) {
+            const start = { line: cursor.line, ch: linkStart + 2 };
+            const end = cursor;
+            editor.replaceRange(item.display + ']]', start, end);
+          }
+        }
       }
     }
   }

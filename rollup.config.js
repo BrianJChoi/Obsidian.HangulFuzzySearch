@@ -1,4 +1,6 @@
 const typescript = require('rollup-plugin-typescript2');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
+const commonjs = require('@rollup/plugin-commonjs');
 
 /** 퍼지 검색 플러그인용 Rollup 설정 */
 module.exports = {
@@ -12,6 +14,8 @@ module.exports = {
   /* 런타임에 Obsidian이 제공하거나 CDN으로 불러올 라이브러리 */
   external: ['obsidian'],
   plugins: [
+    nodeResolve({ browser: true }),
+    commonjs(),
     typescript({
       typescript: require('typescript'),
       tsconfig: 'tsconfig.json'
