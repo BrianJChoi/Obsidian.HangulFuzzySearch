@@ -9,7 +9,7 @@ export default class HangulSearchPlugin extends Plugin {
     index!: HangulIndex;
 
     async onload() {
-        console.log('🔥 Korean Search Plugin: Starting...');
+        console.log('🔥 Korean Omnisearch: Starting...');
 
         try {
             // 1) Load settings first
@@ -37,15 +37,15 @@ export default class HangulSearchPlugin extends Plugin {
             console.log('✅ Settings tab added');
 
             // 7) Show immediate availability message
-            new Notice('✅ Korean Search Plugin ready! Building index in background...', 3000);
-            console.log('🎉 Korean Search Plugin ready! Starting background indexing...');
+            new Notice('✅ Korean Omnisearch ready! Building index in background...', 3000);
+            console.log('🎉 Korean Omnisearch ready! Starting background indexing...');
 
             // 8) Build index progressively in background (non-blocking)
             this.buildIndexProgressively();
 
         } catch (error) {
-            console.error('❌ Korean Search Plugin failed to load:', error);
-            new Notice('❌ Korean Search Plugin failed to load - check console for details', 5000);
+            console.error('❌ Korean Omnisearch failed to load:', error);
+            new Notice('❌ Korean Omnisearch failed to load - check console for details', 5000);
         }
     }
 
@@ -53,15 +53,15 @@ export default class HangulSearchPlugin extends Plugin {
         // Main Korean search command
         this.addCommand({
             id: 'korean-search',
-            name: 'Open Korean Search',
+            name: 'Open Korean Omnisearch',
             hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'o' }],
             callback: () => {
                 try {
-                    console.log('🔍 Opening Korean Search...');
+                    console.log('🔍 Opening Korean Omnisearch...');
                     new HangulSwitcher(this.app, this.index).open();
                 } catch (error) {
-                    console.error('❌ Error opening Korean Search:', error);
-                    new Notice('❌ Error opening Korean Search - check console for details');
+                    console.error('❌ Error opening Korean Omnisearch:', error);
+                    new Notice('❌ Error opening Korean Omnisearch - check console for details');
                 }
             }
         });
@@ -69,9 +69,9 @@ export default class HangulSearchPlugin extends Plugin {
         // Quick search command with examples
         this.addCommand({
             id: 'korean-search-quick',
-            name: 'Korean Search with Examples',
+            name: 'Korean Omnisearch with Examples',
             callback: () => {
-                new Notice('🔍 Korean Search Patterns: ㅎㄱ (초성), 한ㄱ (부분), ㅎㄱㄹ교 (혼합)', 5000);
+                new Notice('🔍 Korean Omnisearch Patterns: ㅎㄱ (초성), 한ㄱ (부분), ㅎㄱㄹ교 (혼합)', 5000);
                 new HangulSwitcher(this.app, this.index).open();
             }
         });
@@ -79,13 +79,13 @@ export default class HangulSearchPlugin extends Plugin {
         // Index rebuild command
         this.addCommand({
             id: 'hangul-rebuild-index',
-            name: 'Rebuild Korean Search Index',
+            name: 'Rebuild Korean Omnisearch Index',
             callback: async () => {
-                const notice = new Notice('🔄 Rebuilding Korean search index...', 0);
+                const notice = new Notice('🔄 Rebuilding Korean Omnisearch index...', 0);
                 try {
                     await this.index.build();
                     notice.hide();
-                    new Notice(`✅ Korean search index rebuilt! ${this.index.getIndexedCount()} files indexed`, 3000);
+                    new Notice(`✅ Korean Omnisearch index rebuilt! ${this.index.getIndexedCount()} files indexed`, 3000);
                 } catch (error) {
                     notice.hide();
                     console.error('❌ Failed to rebuild index:', error);
@@ -97,9 +97,9 @@ export default class HangulSearchPlugin extends Plugin {
         // Help command
         this.addCommand({
             id: 'korean-search-help',
-            name: 'Korean Search Guide',
+            name: 'Korean Omnisearch Guide',
             callback: () => {
-                const help = `🔍 Korean Search Guide:
+                const help = `🔍 Korean Omnisearch Guide:
 
 📝 Search Patterns:
 • ㅎㄱ → finds 한글, 항공, 학교
@@ -122,7 +122,7 @@ export default class HangulSearchPlugin extends Plugin {
 
     private async buildIndexProgressively() {
         try {
-            console.log('🔍 Building Korean search index (ultra-fast mode)...');
+            console.log('🔍 Building Korean Omnisearch index (ultra-fast mode)...');
             
             const files = this.app.vault.getMarkdownFiles();
             const totalFiles = files.length;
@@ -138,7 +138,7 @@ export default class HangulSearchPlugin extends Plugin {
             // For large vaults, show a simple progress notice
             let progressNotice: Notice | null = null;
             if (totalFiles > 2000) {
-                progressNotice = new Notice(`🔄 Fast indexing ${totalFiles} files...`, 0);
+                progressNotice = new Notice(`🔄 Fast indexing ${totalFiles} files for Korean Omnisearch...`, 0);
             }
             
             for (let i = 0; i < files.length; i += batchSize) {
@@ -151,7 +151,7 @@ export default class HangulSearchPlugin extends Plugin {
                 // Update progress less frequently
                 if (progressNotice && totalFiles > 2000 && i % (batchSize * 4) === 0) {
                     const progress = Math.round((totalIndexed / totalFiles) * 100);
-                    progressNotice.setMessage(`🔄 Fast indexing: ${progress}%`);
+                    progressNotice.setMessage(`🔄 Korean Omnisearch indexing: ${progress}%`);
                 }
                 
                 // Minimal delay to keep UI responsive
@@ -165,8 +165,8 @@ export default class HangulSearchPlugin extends Plugin {
                 progressNotice.hide();
             }
             
-            console.log(`✅ Korean search index completed: ${totalIndexed} files (ultra-fast mode)`);
-            new Notice(`🎉 Korean search ready! ${totalIndexed} files indexed instantly`, 3000);
+            console.log(`✅ Korean Omnisearch index completed: ${totalIndexed} files (ultra-fast mode)`);
+            new Notice(`🎉 Korean Omnisearch ready! ${totalIndexed} files indexed instantly`, 3000);
             
         } catch (error) {
             console.error('❌ Failed to build search index:', error);
@@ -211,7 +211,7 @@ export default class HangulSearchPlugin extends Plugin {
     }
 
     onunload() {
-        console.log('👋 Korean Search Plugin: Unloaded');
+        console.log('👋 Korean Omnisearch: Unloaded');
     }
 
     async loadSettings() {

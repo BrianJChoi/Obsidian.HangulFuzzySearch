@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-hangul-search",
+  "name": "korean-omnisearch",
   "version": "0.2.0",
-  "description": "Korean Search (Omnisearch Replacement) - Comprehensive search engine with Korean language support",
+  "description": "Korean Omnisearch - Advanced Korean search engine for Obsidian with 초성/중성/종성 support",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

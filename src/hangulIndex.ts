@@ -26,7 +26,7 @@ export class HangulIndex {
 
     /** Fast initial build - only file names and metadata */
     async build() {
-        console.log('🔍 Building Korean search index (fast mode)...');
+        console.log('🔍 Building Korean Omnisearch index (fast mode)...');
         const files = this.plugin.app.vault.getMarkdownFiles();
         
         this.entries = [];
@@ -44,7 +44,7 @@ export class HangulIndex {
         }
         
         this.rebuildFuse();
-        console.log(`✅ Korean search index completed: ${indexed} files (fast mode)`);
+        console.log(`✅ Korean Omnisearch index completed: ${indexed} files (fast mode)`);
     }
 
     /** Add only file metadata - no content reading */

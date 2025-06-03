@@ -1,6 +1,6 @@
-# Korean Search (Omnisearch Replacement)
+# Korean Omnisearch
 
-A comprehensive search engine for Obsidian with advanced Korean language support. This plugin replaces Omnisearch with **초성** (initial consonant), **중성** (medial vowel), and **종성** (final consonant) search capabilities, plus powerful content indexing and fuzzy matching.
+An advanced Korean search engine for Obsidian with **초성** (initial consonant), **중성** (medial vowel), and **종성** (final consonant) search capabilities, plus powerful content indexing and fuzzy matching.
 
 ## ✨ Key Features
 
@@ -11,7 +11,7 @@ A comprehensive search engine for Obsidian with advanced Korean language support
 - **Content search**: Search inside file content, not just titles
 - **Real-time indexing**: Automatically updates as you create/modify files
 
-### 🚀 **Omnisearch Replacement**
+### 🚀 **Omnisearch Enhancement**
 - **Enhanced Quick Switcher**: Replaces default search with Korean-aware version
 - **Content indexing**: Search through all your note content
 - **Smart scoring**: Relevance-based results with recency and size bonuses
@@ -36,28 +36,28 @@ A comprehensive search engine for Obsidian with advanced Korean language support
 2. In BRAT settings, click **"Add Beta plugin"**
 3. Enter this GitHub URL:
    ```
-   https://github.com/BrianJChoi/obsidian-hangul-search
+   https://github.com/BrianJChoi/korean-omnisearch
    ```
 4. Click **"Add Plugin"** to install
-5. Go to Settings → Community Plugins and enable **"Korean Search (Omnisearch Replacement)"**
+5. Go to Settings → Community Plugins and enable **"Korean Omnisearch"**
 
 ### Method 2: Manual Installation (Development)
 
 1. Clone or download this repository:
 ```bash
-git clone https://github.com/BrianJChoi/obsidian-hangul-search.git
+git clone https://github.com/BrianJChoi/korean-omnisearch.git
 ```
 
 2. Build the plugin:
 ```bash
-cd obsidian-hangul-search
+cd korean-omnisearch
 npm install
 npm run build
 ```
 
 3. Copy to your Obsidian plugins folder:
 ```
-[Your Vault]/.obsidian/plugins/obsidian-hangul-search/
+[Your Vault]/.obsidian/plugins/korean-omnisearch/
 ├── main.js
 ├── manifest.json
 ├── styles.css
@@ -65,7 +65,7 @@ npm run build
 ```
 
 4. Enable the plugin:
-   - Settings → Community Plugins → Enable **"Korean Search (Omnisearch Replacement)"**
+   - Settings → Community Plugins → Enable **"Korean Omnisearch"**
 
 ## 🎯 Usage
 
@@ -99,7 +99,7 @@ npm run build
 
 ## ⚙️ Settings
 
-Settings → Community Plugins → Korean Search (Omnisearch Replacement)
+Settings → Community Plugins → Korean Omnisearch
 
 - **Fuzzy Threshold**: Adjust search accuracy (0: strict, 1: loose)
 - **Enable Auto-indexing**: Real-time vault monitoring
@@ -116,8 +116,8 @@ Settings → Community Plugins → Korean Search (Omnisearch Replacement)
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/BrianJChoi/obsidian-hangul-search.git
-cd obsidian-hangul-search
+git clone https://github.com/BrianJChoi/korean-omnisearch.git
+cd korean-omnisearch
 ```
 
 2. Install dependencies:
@@ -175,7 +175,7 @@ MIT License - Feel free to use, modify, and distribute.
 
 ## 🐛 Bug Reports & Feature Requests
 
-Please report bugs and request features on the [Issues](https://github.com/BrianJChoi/obsidian-hangul-search/issues) page.
+Please report bugs and request features on the [Issues](https://github.com/BrianJChoi/korean-omnisearch/issues) page.
 
 ## 📊 Version History
 
@@ -200,5 +200,5 @@ Please report bugs and request features on the [Issues](https://github.com/Brian
 ---
 
 **Created by**: [Brian Choi](https://github.com/BrianJChoi)  
-**Contact**: [GitHub Issues](https://github.com/BrianJChoi/obsidian-hangul-search/issues)  
+**Contact**: [GitHub Issues](https://github.com/BrianJChoi/korean-omnisearch/issues)  
 **Support**: [GitHub Sponsors](https://github.com/sponsors/BrianJChoi)
