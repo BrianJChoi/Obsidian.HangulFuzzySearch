@@ -18,6 +18,7 @@ export class HangulIndex {
     private entries: IndexEntry[] = [];
     private fuse!: Fuse<IndexEntry>;
     private indexMap: Map<string, IndexEntry> = new Map();
+    private defaultThreshold = 0.4;
 
     constructor(private plugin: HangulSearchPlugin) {}
 
@@ -101,11 +102,20 @@ export class HangulIndex {
     search(query: string, limit: number = 50): IndexEntry[] {
         if (!query.trim()) return [];
         
+        console.log(`🔍 Searching for: "${query}"`);
+        
         // Decompose Korean characters for better matching
         const jamo = Hangul.disassemble(query).join('');
+        console.log(`🔍 Decomposed query: "${jamo}"`);
+        
+        if (!this.fuse) {
+            console.warn('⚠️ Search index not ready, rebuilding...');
+            this.rebuildFuse();
+        }
         
         // Search both original and decomposed text
         const results = this.fuse.search(jamo, { limit });
+        console.log(`🔍 Found ${results.length} results for "${query}"`);
         
         return results
             .map(result => ({
@@ -118,8 +128,15 @@ export class HangulIndex {
 
     /** Update search threshold */
     updateThreshold(threshold: number) {
-        this.plugin.settings.fuzzyThreshold = threshold;
-        this.rebuildFuse();
+        try {
+            if (this.plugin.settings) {
+                this.plugin.settings.fuzzyThreshold = threshold;
+            }
+            this.rebuildFuse();
+        } catch (error) {
+            console.warn('Could not update plugin settings, using default threshold');
+            this.rebuildFuse();
+        }
     }
 
     /** Get total number of indexed files */
@@ -192,17 +209,25 @@ export class HangulIndex {
     }
 
     private rebuildFuse() {
-        this.fuse = new Fuse(this.entries, {
-            threshold: this.plugin.settings.fuzzyThreshold,
-            keys: [
-                { name: 'jamo', weight: 0.4 },
-                { name: 'display', weight: 0.3 },
-                { name: 'contentJamo', weight: 0.2 },
-                { name: 'content', weight: 0.1 }
-            ],
-            includeScore: true,
-            minMatchCharLength: 1,
-            ignoreLocation: true
-        });
+        try {
+            const threshold = this.plugin.settings?.fuzzyThreshold || this.defaultThreshold;
+            
+            this.fuse = new Fuse(this.entries, {
+                threshold: threshold,
+                keys: [
+                    { name: 'jamo', weight: 0.4 },
+                    { name: 'display', weight: 0.3 },
+                    { name: 'contentJamo', weight: 0.2 },
+                    { name: 'content', weight: 0.1 }
+                ],
+                includeScore: true,
+                minMatchCharLength: 1,
+                ignoreLocation: true
+            });
+            
+            console.log(`🔧 Fuse.js index rebuilt with threshold: ${threshold}`);
+        } catch (error) {
+            console.error('❌ Failed to rebuild Fuse index:', error);
+        }
     }
 } 
