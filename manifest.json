@@ -1,7 +1,7 @@
 {
   "id": "korean-omnisearch",
   "name": "Korean Omnisearch",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minAppVersion": "1.1.0",
   "description": "Advanced Korean search engine for Obsidian with 초성/중성/종성 support, content indexing, and intelligent fuzzy matching.",
   "author": "Brian Choi",
