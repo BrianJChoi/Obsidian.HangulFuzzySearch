@@ -1,4 +1,4 @@
-import { Plugin, TFile } from 'obsidian';
+import { Plugin, TFile, Notice, WorkspaceLeaf } from 'obsidian';
 import { HangulSearchSettings, DEFAULT_SETTINGS, HangulSearchSettingTab } from './src/settings';
 import { HangulIndex } from './src/hangulIndex';
 import { HangulSwitcher } from './src/hangulSwitcher';
@@ -10,19 +10,35 @@ export default class HangulSearchPlugin extends Plugin {
     index!: HangulIndex;
 
     async onload() {
-        console.log('Loading Hangul Search Plugin...');
+        console.log('🔥 Hangul Search Plugin (Omnisearch Replacement): Starting to load...');
 
         try {
-            // 1) 설정 로드
+            // 1) Load settings
             await this.loadSettings();
-            console.log('Settings loaded:', this.settings);
+            console.log('✅ Settings loaded:', this.settings);
 
-            // 2) 색인 빌드
+            // 2) Build search index
             this.index = new HangulIndex(this);
             await this.index.build();
-            console.log('Index built successfully');
+            console.log('✅ Korean search index built successfully');
 
-            // 3) 볼트 이벤트 감시
+            // 3) Watch vault events for real-time updates
+            this.registerEvent(
+                this.app.vault.on('create', (file) => {
+                    if (file instanceof TFile && file.extension === 'md') {
+                        this.index.addFile(file);
+                    }
+                })
+            );
+
+            this.registerEvent(
+                this.app.vault.on('delete', (file) => {
+                    if (file instanceof TFile) {
+                        this.index.removeFile(file);
+                    }
+                })
+            );
+
             this.registerEvent(
                 this.app.vault.on('rename', (file, oldPath) => {
                     if (file instanceof TFile) {
@@ -31,26 +47,44 @@ export default class HangulSearchPlugin extends Plugin {
                 })
             );
 
-            // 4) 명령어 추가
+            this.registerEvent(
+                this.app.vault.on('modify', (file) => {
+                    if (file instanceof TFile && file.extension === 'md') {
+                        this.index.updateFile(file);
+                    }
+                })
+            );
+
+            // 4) Add commands
             addCommands(this);
-            console.log('Commands added');
+            console.log('✅ Korean search commands added');
 
-            // 5) 링크 자동완성 등록
+            // 5) Register link autocompletion
             this.registerEditorSuggest(new HangulLinkSuggest(this.app, this.index));
-            console.log('Link suggest registered');
+            console.log('✅ Korean link suggestions registered');
 
-            // 6) 설정 탭 추가
+            // 6) Add settings tab
             this.addSettingTab(new HangulSearchSettingTab(this.app, this));
-            console.log('Settings tab added');
+            console.log('✅ Settings tab added');
 
-            console.log('Hangul Search Plugin loaded successfully.');
+            // 7) Override default Quick Switcher if enabled
+            if (this.settings.overrideQuickSwitcher) {
+                this.overrideQuickSwitcher();
+                console.log('✅ Quick Switcher overridden with Korean search');
+            }
+
+            // 8) Show success message
+            new Notice('🎉 Korean Search (Omnisearch replacement) loaded successfully!', 3000);
+            console.log('🎉 Hangul Search Plugin loaded successfully as Omnisearch replacement!');
+
         } catch (error) {
-            console.error('Error loading Hangul Search Plugin:', error);
+            console.error('❌ Error loading Hangul Search Plugin:', error);
+            new Notice('❌ Failed to load Korean Search Plugin - check console', 5000);
         }
     }
 
     onunload() {
-        console.log('Unloading Hangul Search Plugin...');
+        console.log('👋 Hangul Search Plugin: Unloading...');
     }
 
     async loadSettings() {
@@ -59,5 +93,26 @@ export default class HangulSearchPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+
+    private overrideQuickSwitcher() {
+        // Override the default Quick Switcher hotkey
+        this.addCommand({
+            id: 'korean-quick-switcher-override',
+            name: 'Korean Quick Switcher (Override)',
+            hotkeys: [{ modifiers: ['Mod'], key: 'o' }],
+            callback: () => {
+                new HangulSwitcher(this.app, this.index).open();
+            }
+        });
+    }
+
+    // Public API for other plugins
+    public getSearchIndex() {
+        return this.index;
+    }
+
+    public search(query: string) {
+        return this.index.search(query);
     }
 } 

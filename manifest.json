@@ -1,10 +1,10 @@
 {
   "id": "obsidian-hangul-search",
-  "name": "Hangul Fuzzy Search",
+  "name": "Korean Search (Omnisearch Replacement)",
   "version": "0.1.1",
   "minAppVersion": "1.1.0",
-  "description": "Adds Hangul fuzzy search (초성·중성·부분 음절) to Quick Switcher and link suggestions.",
-  "author": "brianchoi",
+  "description": "Comprehensive search engine with Korean language support. Replaces Omnisearch with 초성/중성/종성 search, content indexing, and advanced fuzzy matching.",
+  "author": "Brian Choi",
   "authorUrl": "https://github.com/BrianJChoi",
   "fundingUrl": "https://github.com/sponsors/BrianJChoi",
   "isDesktopOnly": false,
