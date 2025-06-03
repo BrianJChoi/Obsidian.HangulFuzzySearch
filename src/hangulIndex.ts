@@ -41,7 +41,7 @@ export class HangulIndex {
         }
         
         this.rebuildFuse();
-        console.log(`✅ Indexed ${indexed} files with Korean search support`);
+        console.log(`✅ Korean search index completed: ${indexed} files`);
     }
 
     /** Add a single file to the index */
@@ -102,11 +102,11 @@ export class HangulIndex {
     search(query: string, limit: number = 50): IndexEntry[] {
         if (!query.trim()) return [];
         
-        console.log(`🔍 Searching for: "${query}"`);
+        console.log(`🔍 Searching: "${query}"`);
         
         // Handle different types of Korean search patterns
         const searchResults = this.performKoreanSearch(query);
-        console.log(`🔍 Found ${searchResults.length} results for "${query}"`);
+        console.log(`📊 Found ${searchResults.length} results`);
         
         return searchResults
             .sort((a, b) => b.score - a.score)
@@ -123,19 +123,19 @@ export class HangulIndex {
         // Strategy 2: Decomposed search (for Korean characters)
         const decomposed = this.decomposeKoreanText(query);
         if (decomposed !== query) {
-            console.log(`🔍 Decomposed query: "${query}" → "${decomposed}"`);
+            console.log(`🔍 Using decomposed search: "${decomposed}"`);
             this.searchByStrategy(decomposed, results, 'decomposed');
         }
         
         // Strategy 3: Initial consonant search (초성 검색)
         if (this.isInitialConsonantQuery(query)) {
-            console.log(`🔍 Initial consonant search for: "${query}"`);
+            console.log(`🔍 Initial consonant search: "${query}"`);
             this.searchByInitialConsonants(query, results);
         }
         
         // Strategy 4: Partial syllable search (부분 음절)
         if (this.isPartialSyllableQuery(query)) {
-            console.log(`🔍 Partial syllable search for: "${query}"`);
+            console.log(`🔍 Partial syllable search: "${query}"`);
             this.searchByPartialSyllables(query, results);
         }
         
@@ -149,7 +149,6 @@ export class HangulIndex {
         }
         
         const fuseResults = this.fuse.search(searchTerm, { limit: 50 });
-        console.log(`📊 Strategy "${strategy}" found ${fuseResults.length} results for "${searchTerm}"`);
         
         fuseResults.forEach(result => {
             const item = result.item;
@@ -267,8 +266,6 @@ export class HangulIndex {
         const jamo = this.decomposeKoreanText(display);
         const contentJamo = this.decomposeKoreanText(content);
         
-        console.log(`📝 Indexing: "${display}" → decomposed: "${jamo}"`);
-        
         return {
             display,
             jamo,
@@ -347,9 +344,9 @@ export class HangulIndex {
                 includeMatches: false
             });
             
-            console.log(`🔧 Fuse.js index rebuilt with threshold: ${threshold}, entries: ${this.entries.length}`);
+            console.log(`🔧 Search index updated: ${this.entries.length} entries`);
         } catch (error) {
-            console.error('❌ Failed to rebuild Fuse index:', error);
+            console.error('❌ Failed to rebuild search index:', error);
         }
     }
 } 

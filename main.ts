@@ -9,12 +9,12 @@ export default class HangulSearchPlugin extends Plugin {
     index!: HangulIndex;
 
     async onload() {
-        console.log('🔥 Korean Search Plugin: Starting to load...');
+        console.log('🔥 Korean Search Plugin: Starting...');
 
         try {
             // 1) Load settings first
             await this.loadSettings();
-            console.log('✅ Settings loaded successfully');
+            console.log('✅ Settings loaded');
 
             // 2) Initialize search index
             this.index = new HangulIndex(this);
@@ -22,7 +22,7 @@ export default class HangulSearchPlugin extends Plugin {
 
             // 3) Add core commands immediately
             this.addCoreCommands();
-            console.log('✅ Core commands added');
+            console.log('✅ Commands registered');
 
             // 4) Build index in background
             this.buildIndexAsync();
@@ -33,19 +33,19 @@ export default class HangulSearchPlugin extends Plugin {
 
             // 6) Register link autocompletion
             this.registerEditorSuggest(new HangulLinkSuggest(this.app, this.index));
-            console.log('✅ Korean link suggestions registered');
+            console.log('✅ Korean link suggestions enabled');
 
             // 7) Add settings tab
             this.addSettingTab(new HangulSearchSettingTab(this.app, this));
             console.log('✅ Settings tab added');
 
             // 8) Show success message
-            new Notice('🎉 Korean Search loaded! Try Cmd/Ctrl+Shift+O to search', 4000);
-            console.log('🎉 Korean Search Plugin loaded successfully!');
+            new Notice('🎉 Korean Search Plugin activated! Use Cmd/Ctrl+Shift+O to search', 4000);
+            console.log('🎉 Korean Search Plugin ready!');
 
         } catch (error) {
-            console.error('❌ Error loading Korean Search Plugin:', error);
-            new Notice('❌ Failed to load Korean Search Plugin - check console', 5000);
+            console.error('❌ Korean Search Plugin failed to load:', error);
+            new Notice('❌ Korean Search Plugin failed to load - check console for details', 5000);
         }
     }
 
@@ -53,7 +53,7 @@ export default class HangulSearchPlugin extends Plugin {
         // Main Korean search command
         this.addCommand({
             id: 'korean-search',
-            name: 'Korean Search (Test Korean patterns here!)',
+            name: 'Open Korean Search',
             hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'o' }],
             callback: () => {
                 try {
@@ -61,17 +61,17 @@ export default class HangulSearchPlugin extends Plugin {
                     new HangulSwitcher(this.app, this.index).open();
                 } catch (error) {
                     console.error('❌ Error opening Korean Search:', error);
-                    new Notice('❌ Error opening Korean Search - check console');
+                    new Notice('❌ Error opening Korean Search - check console for details');
                 }
             }
         });
 
-        // Quick test command
+        // Quick search command with examples
         this.addCommand({
-            id: 'korean-search-test',
-            name: 'Test Korean Search Now!',
+            id: 'korean-search-quick',
+            name: 'Korean Search with Examples',
             callback: () => {
-                new Notice('🔍 Try these patterns: ㅎㄱ (초성), 한ㄱ (부분), ㅎㄱㄹ교 (혼합)', 5000);
+                new Notice('🔍 Korean Search Patterns: ㅎㄱ (초성), 한ㄱ (부분), ㅎㄱㄹ교 (혼합)', 5000);
                 new HangulSwitcher(this.app, this.index).open();
             }
         });
@@ -85,11 +85,11 @@ export default class HangulSearchPlugin extends Plugin {
                 try {
                     await this.index.build();
                     notice.hide();
-                    new Notice(`✅ Korean index rebuilt! Found ${this.index.getIndexedCount()} files`, 3000);
+                    new Notice(`✅ Korean search index rebuilt! ${this.index.getIndexedCount()} files indexed`, 3000);
                 } catch (error) {
                     notice.hide();
                     console.error('❌ Failed to rebuild index:', error);
-                    new Notice('❌ Failed to rebuild index - check console', 5000);
+                    new Notice('❌ Failed to rebuild search index - check console for details', 5000);
                 }
             }
         });
@@ -97,23 +97,23 @@ export default class HangulSearchPlugin extends Plugin {
         // Help command
         this.addCommand({
             id: 'korean-search-help',
-            name: 'Korean Search Help & Examples',
+            name: 'Korean Search Guide',
             callback: () => {
-                const help = `🔍 Korean Search Help:
+                const help = `🔍 Korean Search Guide:
 
-📝 Try these patterns:
+📝 Search Patterns:
 • ㅎㄱ → finds 한글, 항공, 학교
 • 한ㄱ → finds 한국, 한글  
 • ㅎㄱㄹ교 → finds 한글학교
 
-⌨️ Shortcuts:
+⌨️ Keyboard Shortcuts:
 • Cmd/Ctrl+Shift+O: Open search
 • ↑↓: Navigate results
 • Enter: Open file
-• Ctrl+Enter: New tab
-• Shift+Enter: New pane
+• Ctrl+Enter: Open in new tab
+• Shift+Enter: Open in new pane
 
-Currently indexed: ${this.index.getIndexedCount()} files`;
+📊 Currently indexed: ${this.index.getIndexedCount()} files`;
                 
                 new Notice(help, 8000);
             }
@@ -124,11 +124,11 @@ Currently indexed: ${this.index.getIndexedCount()} files`;
         try {
             console.log('🔍 Building Korean search index...');
             await this.index.build();
-            console.log(`✅ Korean search index built: ${this.index.getIndexedCount()} files indexed`);
-            new Notice(`✅ Korean search ready! ${this.index.getIndexedCount()} files indexed`, 3000);
+            console.log(`✅ Korean search index completed: ${this.index.getIndexedCount()} files`);
+            new Notice(`✅ Korean search is ready! ${this.index.getIndexedCount()} files indexed`, 3000);
         } catch (error) {
             console.error('❌ Failed to build search index:', error);
-            new Notice('❌ Failed to build search index - check console', 5000);
+            new Notice('❌ Failed to build search index - check console for details', 5000);
         }
     }
 
@@ -169,7 +169,7 @@ Currently indexed: ${this.index.getIndexedCount()} files`;
     }
 
     onunload() {
-        console.log('👋 Korean Search Plugin: Unloading...');
+        console.log('👋 Korean Search Plugin: Unloaded');
     }
 
     async loadSettings() {
